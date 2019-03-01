@@ -6,6 +6,7 @@ namespace TYPO3Fluid\Fluid\Tests;
  * See LICENSE.txt that was shipped with this package.
  */
 
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -36,12 +37,54 @@ abstract class BaseTestCase extends TestCase
      * @param boolean $callOriginalConstructor
      * @param boolean $callOriginalClone
      * @param boolean $callAutoload
-     * @return \PHPUnit_Framework_MockObject_MockObject
+     * @return MockObject
      * @api
      */
     protected function getAccessibleMock($originalClassName, $methods = [], array $arguments = [], $mockClassName = '', $callOriginalConstructor = true, $callOriginalClone = true, $callAutoload = true)
     {
-        return $this->getMock($this->buildAccessibleProxy($originalClassName), $methods, $arguments, $mockClassName, $callOriginalConstructor, $callOriginalClone, $callAutoload);
+        $builder = $this->getMockBuilder($this->buildAccessibleProxy($originalClassName))->setMethods($methods)->setConstructorArgs($arguments)->setMockClassName($mockClassName);
+        if (!$callAutoload) {
+            $builder->disableAutoload();
+        }
+        if (!$callOriginalClone) {
+            $builder->disableOriginalClone();
+        }
+        if (!$callOriginalConstructor) {
+            $builder->disableOriginalConstructor();
+        }
+
+        return $builder->getMock();
+    }
+
+    /**
+     * Returns a mock object which allows for calling protected methods and access
+     * of protected properties.
+     *
+     * @param string $originalClassName Full qualified name of the original class
+     * @param array $methods
+     * @param array $arguments
+     * @param boolean $callOriginalConstructor
+     * @param boolean $callOriginalClone
+     * @param boolean $callAutoload
+     * @return MockObject
+     * @api
+     */
+    protected function getMock($originalClassName, $methods = [], array $arguments = [], $callOriginalConstructor = true, $callOriginalClone = true, $callAutoload = true)
+    {
+        $builder = $this->getMockBuilder($originalClassName)->setMethods($methods)->setConstructorArgs($arguments);
+        if (!$callAutoload) {
+            $builder->disableAutoload();
+        }
+
+        if (!$callOriginalClone) {
+            $builder->disableOriginalClone();
+        }
+
+        if (!$callOriginalConstructor) {
+            $builder->disableOriginalConstructor();
+        }
+
+        return $builder->getMock();
     }
 
     /**
