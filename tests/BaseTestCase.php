@@ -151,6 +151,19 @@ abstract class BaseTestCase extends TestCase
         return $accessibleClassName;
     }
 
+    protected function setExpectedException(string $class = \Exception::class, string $message = '', int $code = 0)
+    {
+        if ($class) {
+            $this->expectException($class);
+        }
+        if ($message) {
+            $this->expectExceptionMessage($message);
+        }
+        if ($code) {
+            $this->expectExceptionCode($code);
+        }
+    }
+
     /**
      * Injects $dependency into property $name of $target
      *
