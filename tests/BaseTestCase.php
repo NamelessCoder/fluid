@@ -6,6 +6,8 @@ namespace TYPO3Fluid\Fluid\Tests;
  * See LICENSE.txt that was shipped with this package.
  */
 
+use PHPUnit\Framework\TestCase;
+
 /**
  * The mother of all test cases.
  *
@@ -14,7 +16,7 @@ namespace TYPO3Fluid\Fluid\Tests;
  *
  * @api
  */
-abstract class BaseTestCase extends \PHPUnit_Framework_TestCase
+abstract class BaseTestCase extends TestCase
 {
 
     /**
