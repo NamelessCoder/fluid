@@ -23,7 +23,7 @@ class NumericNodeTest extends UnitTestCase
      */
     protected $renderingContext;
 
-    public function setUp()
+    public function setUp() : void
     {
         $this->renderingContext = new RenderingContextFixture();
     }
