@@ -60,7 +60,7 @@ abstract class ViewHelperBaseTestcase extends UnitTestCase
     /**
      * @return void
      */
-    public function setUp(): void
+    public function setUp(): void: void
     {
         $this->viewHelperVariableContainer = new ViewHelperVariableContainer();
         $this->templateVariableContainer = new StandardVariableProvider();

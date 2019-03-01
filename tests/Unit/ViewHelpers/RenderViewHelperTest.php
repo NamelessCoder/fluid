@@ -32,7 +32,7 @@ class RenderViewHelperTest extends ViewHelperBaseTestcase
     /**
      * @return void
      */
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->subject = $this->getMock(RenderViewHelper::class, ['renderChildren']);
