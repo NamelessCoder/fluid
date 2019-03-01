@@ -34,7 +34,7 @@ class SwitchViewHelperTest extends ViewHelperBaseTestcase
      */
     protected $viewHelperNode;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->viewHelperNode = $this->getMockBuilder(ViewHelperNode::class)->disableOriginalConstructor()->getMock();
