@@ -100,7 +100,7 @@ class RenderingContextFixture implements RenderingContextInterface
      */
     public function __construct()
     {
-        $mockBuilder = new \PHPUnit_Framework_MockObject_Generator();
+        $mockBuilder = new \PHPUnit\Framework\MockObject\Generator();
         $this->variableProvider = $mockBuilder->getMock(VariableProviderInterface::class);
         $this->viewHelperVariableContainer = $mockBuilder->getMock(ViewHelperVariableContainer::class, ['dummy']);
         $this->viewHelperResolver = $mockBuilder->getMock(ViewHelperResolver::class, ['dummy']);
