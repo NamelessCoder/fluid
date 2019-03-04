@@ -45,10 +45,11 @@ class GroupedForViewHelperTest extends ViewHelperBaseTestcase
 
     /**
      * @test
-     * @expectedException \TYPO3Fluid\Fluid\Core\ViewHelper\Exception
      */
     public function renderThrowsExceptionWhenPassingObjectsToEachThatAreNotTraversable()
     {
+        $this->expectException(\TYPO3Fluid\Fluid\Core\ViewHelper\Exception::class);
+
         $object = new \stdClass();
         $this->viewHelper->setArguments(
             ['each' => $object, 'as' => 'innerVariable', 'groupBy' => 'someKey', 'groupKey' => null]
@@ -282,10 +283,11 @@ class GroupedForViewHelperTest extends ViewHelperBaseTestcase
 
     /**
      * @test
-     * @expectedException \TYPO3Fluid\Fluid\Core\ViewHelper\Exception
      */
     public function renderThrowsExceptionWhenPassingOneDimensionalArraysToEach()
     {
+        $this->expectException(\TYPO3Fluid\Fluid\Core\ViewHelper\Exception::class);
+
         $values = ['some', 'simple', 'array'];
 
         $this->viewHelper->setArguments(

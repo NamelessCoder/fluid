@@ -39,10 +39,11 @@ class CycleViewHelperTest extends ViewHelperBaseTestcase
 
     /**
      * @test
-     * @expectedException \TYPO3Fluid\Fluid\Core\ViewHelper\Exception
      */
     public function renderThrowsExceptionWhenPassingObjectsToValuesThatAreNotTraversable()
     {
+        $this->expectException(\TYPO3Fluid\Fluid\Core\ViewHelper\Exception::class);
+
         $object = new \stdClass();
         $this->viewHelper->setArguments(['values' => $object, 'as' => 'innerVariable']);
         $this->viewHelper->render();

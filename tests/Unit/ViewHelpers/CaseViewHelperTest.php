@@ -37,10 +37,11 @@ class CaseViewHelperTest extends ViewHelperBaseTestcase
 
     /**
      * @test
-     * @expectedException \TYPO3Fluid\Fluid\Core\ViewHelper\Exception
      */
     public function renderThrowsExceptionIfSwitchExpressionIsNotSetInViewHelperVariableContainer()
     {
+        $this->expectException(\TYPO3Fluid\Fluid\Core\ViewHelper\Exception::class);
+
         $this->viewHelper->setArguments(['value' => 'foo']);
         $this->viewHelper->initializeArgumentsAndRender();
     }

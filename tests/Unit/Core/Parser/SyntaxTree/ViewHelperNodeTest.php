@@ -92,10 +92,11 @@ class ViewHelperNodeTest extends UnitTestCase
 
     /**
      * @test
-     * @expectedException \TYPO3Fluid\Fluid\Core\Parser\Exception
      */
     public function abortIfRequiredArgumentsAreMissingThrowsException()
     {
+        $this->expectException(\TYPO3Fluid\Fluid\Core\Parser\Exception::class);
+
         $expected = [
             new ArgumentDefinition('firstArgument', 'string', '', false),
             new ArgumentDefinition('secondArgument', 'string', '', true)

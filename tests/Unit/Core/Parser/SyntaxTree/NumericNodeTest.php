@@ -50,19 +50,20 @@ class NumericNodeTest extends UnitTestCase
 
     /**
      * @test
-     * @expectedException \TYPO3Fluid\Fluid\Core\Parser\Exception
      */
     public function constructorThrowsExceptionIfNoNumericGiven()
     {
+        $this->expectException(\TYPO3Fluid\Fluid\Core\Parser\Exception::class);
         new NumericNode('foo');
     }
 
     /**
      * @test
-     * @expectedException \TYPO3Fluid\Fluid\Core\Parser\Exception
      */
     public function addChildNodeThrowsException()
     {
+        $this->expectException( \TYPO3Fluid\Fluid\Core\Parser\Exception::class);
+
         $node = new NumericNode('1');
         $node->addChildNode(clone $node);
     }
