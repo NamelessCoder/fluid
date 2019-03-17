@@ -7,6 +7,7 @@ namespace TYPO3Fluid\Fluid\ViewHelpers;
  */
 
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
+use TYPO3Fluid\Fluid\Core\ViewHelper\CompilerSkippedViewHelperInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\Traits\ParserRuntimeOnly;
 
 /**
@@ -44,7 +45,7 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\Traits\ParserRuntimeOnly;
  *
  * @api
  */
-class CommentViewHelper extends AbstractViewHelper
+class CommentViewHelper extends AbstractViewHelper implements CompilerSkippedViewHelperInterface
 {
     use ParserRuntimeOnly;
 

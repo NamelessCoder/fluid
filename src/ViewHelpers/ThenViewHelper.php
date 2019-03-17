@@ -9,6 +9,7 @@ namespace TYPO3Fluid\Fluid\ViewHelpers;
 use TYPO3Fluid\Fluid\Core\Compiler\TemplateCompiler;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\ViewHelperNode;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
+use TYPO3Fluid\Fluid\Core\ViewHelper\CompilerSkippedViewHelperInterface;
 
 /**
  * "THEN" -> only has an effect inside of "IF". See If-ViewHelper for documentation.
@@ -16,7 +17,7 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * @see \TYPO3Fluid\Fluid\ViewHelpers\IfViewHelper
  * @api
  */
-class ThenViewHelper extends AbstractViewHelper
+class ThenViewHelper extends AbstractViewHelper implements CompilerSkippedViewHelperInterface
 {
 
     /**

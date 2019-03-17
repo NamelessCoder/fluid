@@ -18,6 +18,7 @@ use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\RootNode;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\TextNode;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\ViewHelperNode;
 use TYPO3Fluid\Fluid\Core\Variables\VariableExtractor;
+use TYPO3Fluid\Fluid\Core\ViewHelper\CompilerSkippedViewHelperInterface;
 
 /**
  * Class NodeConverter
@@ -107,12 +108,14 @@ class NodeConverter
     protected function convertEscapingNode(EscapingNode $node)
     {
         $configuration = $this->convert($node->getNode());
-        $configuration['execution'] = sprintf(
-            'call_user_func_array( function ($var) { ' .
-            'return (is_string($var) || (is_object($var) && method_exists($var, \'__toString\')) ' .
-            '? htmlspecialchars((string) $var, ENT_QUOTES) : $var); }, [%s])',
-            $configuration['execution']
-        );
+        if (!empty($configuration['execution'])) {
+            $configuration['execution'] = sprintf(
+                'call_user_func_array( function ($var) { ' .
+                'return (is_string($var) || (is_object($var) && method_exists($var, \'__toString\')) ' .
+                '? htmlspecialchars((string) $var, ENT_QUOTES) : $var); }, [%s])',
+                $configuration['execution']
+            );
+        }
         return $configuration;
     }
 
@@ -152,7 +155,9 @@ class NodeConverter
      */
     protected function convertViewHelperNode(ViewHelperNode $node)
     {
-        $initializationPhpCode = '// Rendering ViewHelper ' . $node->getViewHelperClassName() . chr(10);
+        if ($node->getUninitializedViewHelper() instanceof CompilerSkippedViewHelperInterface) {
+            return [];
+        }
 
         // Build up $arguments array
         $argumentsVariableName = $this->variableName('arguments');
@@ -201,6 +206,8 @@ class NodeConverter
                 ) . chr(10);
                 $alreadyBuiltArguments[$argumentName] = true;
             }
+
+            $initializationPhpCode = '// Rendering ViewHelper ' . $node->getViewHelperClassName() . chr(10);
 
             // Build up closure which renders the child nodes
             $initializationPhpCode .= sprintf(
@@ -283,7 +290,9 @@ class NodeConverter
         foreach ($node->getInternalArray() as $key => $value) {
             if ($value instanceof NodeInterface) {
                 $converted = $this->convert($value);
-                $initializationPhpCode .= $converted['initialization'];
+                if (!empty($converted['initialization'])) {
+                    $initializationPhpCode .= $converted['initialization'];
+                }
                 $initializationPhpCode .= sprintf(
                     '%s[\'%s\'] = %s;',
                     $arrayVariableName,
@@ -323,10 +332,7 @@ class NodeConverter
     {
         switch (count($node->getChildNodes())) {
             case 0:
-                return [
-                    'initialization' => '',
-                    'execution' => 'NULL'
-                ];
+                return [];
             case 1:
                 $childNode = current($node->getChildNodes());
                 if ($childNode instanceof NodeInterface) {
@@ -339,8 +345,12 @@ class NodeConverter
                 foreach ($node->getChildNodes() as $childNode) {
                     $converted = $this->convert($childNode);
 
-                    $initializationPhpCode .= $converted['initialization'] . chr(10);
-                    $initializationPhpCode .= sprintf('%s .= %s;', $outputVariableName, $converted['execution']) . chr(10);
+                    if (!empty($converted['initialization'])) {
+                        $initializationPhpCode .= $converted['initialization'] . chr(10);
+                    }
+                    if (!empty($converted['execution'])) {
+                        $initializationPhpCode .= sprintf('%s .= %s;', $outputVariableName, $converted['execution']) . chr(10);
+                    }
                 }
 
                 return [
@@ -367,9 +377,24 @@ class NodeConverter
      */
     protected function convertBooleanNode(BooleanNode $node)
     {
-        $stack = $this->convertArrayNode(new ArrayNode($node->getStack()));
-        $initializationPhpCode = '// Rendering Boolean node' . chr(10);
-        $initializationPhpCode .= $stack['initialization'] . chr(10);
+        $booleanStack = $node->getStack();
+        if (count($booleanStack) === 1) {
+            if (!$booleanStack[0] instanceof NodeInterface || $booleanStack[0] instanceof TextNode) {
+                return [
+                    'initialization' => '',
+                    'execution' => $booleanStack[0] && strtolower((string)$booleanStack[0]) !== 'false' ? 'true' : 'false',
+                ];
+            }
+
+            $compiledOnlyNode = $this->convert($booleanStack[0]);
+            return [
+                'initialization' => $compiledOnlyNode['initialization'],
+                'execution' => '(bool)(' . ($compiledOnlyNode['execution'] ? $compiledOnlyNode['execution'] : 'false') . ')',
+            ];
+        }
+
+        $stack = $this->convertArrayNode(new ArrayNode($booleanStack));
+        $initializationPhpCode = $stack['initialization'] . chr(10);
 
         $parser = new BooleanParser();
         $compiledExpression = $parser->compile(BooleanNode::reconcatenateExpression($node->getStack()));

@@ -6,6 +6,9 @@ namespace TYPO3Fluid\Fluid\Core\Parser;
  * See LICENSE.txt that was shipped with this package.
  */
 
+use TYPO3Fluid\Fluid\Component\Argument\ArgumentCollection;
+use TYPO3Fluid\Fluid\Component\Event\PostParseEvent;
+use TYPO3Fluid\Fluid\Component\EventAwareComponentInterface;
 use TYPO3Fluid\Fluid\Core\Compiler\StopCompilingException;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\ArrayNode;
 use TYPO3Fluid\Fluid\Core\Compiler\UncompilableTemplateInterface;
@@ -178,9 +181,7 @@ class TemplateParser
     public function getOrParseAndStoreTemplate($templateIdentifier, $templateSourceClosure)
     {
         $compiler = $this->renderingContext->getTemplateCompiler();
-        if (isset($this->parsedTemplates[$templateIdentifier])) {
-            $parsedTemplate = $this->parsedTemplates[$templateIdentifier];
-        } elseif ($compiler->has($templateIdentifier)) {
+        if ($compiler->has($templateIdentifier)) {
             $parsedTemplate = $compiler->get($templateIdentifier);
             if ($parsedTemplate instanceof UncompilableTemplateInterface) {
                 $parsedTemplate = $this->parseTemplateSource($templateIdentifier, $templateSourceClosure);
@@ -189,6 +190,7 @@ class TemplateParser
             $parsedTemplate = $this->parseTemplateSource($templateIdentifier, $templateSourceClosure);
             try {
                 $compiler->store($templateIdentifier, $parsedTemplate);
+                return $compiler->get($templateIdentifier);
             } catch (StopCompilingException $stop) {
                 $this->renderingContext->getErrorHandler()->handleCompilerError($stop);
                 $parsedTemplate->setCompilable(false);
@@ -210,7 +212,6 @@ class TemplateParser
             $templateIdentifier
         );
         $parsedTemplate->setIdentifier($templateIdentifier);
-        $this->parsedTemplates[$templateIdentifier] = $parsedTemplate;
         return $parsedTemplate;
     }
 
@@ -325,14 +326,17 @@ class TemplateParser
             $state,
             $namespaceIdentifier,
             $methodIdentifier,
-            $this->parseArguments($arguments)
+            $this->parseArguments($arguments),
+            $selfclosing
         );
 
         if ($viewHelperNode) {
             $viewHelperNode->setPointerTemplateCode($templateElement);
             if ($selfclosing === true) {
                 $state->popNodeFromStack();
-                $this->callInterceptor($viewHelperNode, InterceptorInterface::INTERCEPT_CLOSING_VIEWHELPER, $state);
+                if ($viewHelperNode instanceof ViewHelperNode) {
+                    $this->callInterceptor($viewHelperNode, InterceptorInterface::INTERCEPT_CLOSING_VIEWHELPER, $state);
+                }
                 // This needs to be called here because closingViewHelperTagHandler() is not triggered for self-closing tags
                 $state->getNodeFromStack()->addChildNode($viewHelperNode);
             }
@@ -350,6 +354,7 @@ class TemplateParser
      * @param string $methodIdentifier Method identifier
      * @param array $argumentsObjectTree Arguments object tree
      * @return null|NodeInterface An instance of ViewHelperNode if identity was valid - NULL if the namespace/identity was not registered
+     * @return bool $selfClosing
      * @throws Exception
      */
     protected function initializeViewHelperAndAddItToStack(ParsingState $state, $namespaceIdentifier, $methodIdentifier, $argumentsObjectTree)
@@ -369,7 +374,17 @@ class TemplateParser
 
             $this->callInterceptor($currentViewHelperNode, InterceptorInterface::INTERCEPT_OPENING_VIEWHELPER, $state);
             $viewHelper = $currentViewHelperNode->getUninitializedViewHelper();
-            $viewHelper::postParseEvent($currentViewHelperNode, $argumentsObjectTree, $state->getVariableContainer());
+
+            if ($viewHelper instanceof EventAwareComponentInterface) {
+                $argumentCollection = new ArgumentCollection();
+                $event = new PostParseEvent($this->renderingContext, new \ArrayObject([
+                    PostParseEvent::PAYLOAD_PARSING_STATE => $state,
+                    PostParseEvent::PAYLOAD_NODE => $currentViewHelperNode
+                ]));
+                $viewHelper = $viewHelper->handleEvent($event);
+            }
+
+            #$viewHelper::postParseEvent($currentViewHelperNode, $argumentsObjectTree, $state->getVariableContainer());
             $state->pushNodeToStack($currentViewHelperNode);
             return $currentViewHelperNode;
         } catch (\TYPO3Fluid\Fluid\Core\ViewHelper\Exception $error) {
@@ -405,16 +420,23 @@ class TemplateParser
         if (!($lastStackElement instanceof ViewHelperNode)) {
             throw new Exception('You closed a templating tag which you never opened!', 1224485838);
         }
-        $actualViewHelperClassName = $viewHelperResolver->resolveViewHelperClassName($namespaceIdentifier, $methodIdentifier);
-        $expectedViewHelperClassName = $lastStackElement->getViewHelperClassName();
-        if ($actualViewHelperClassName !== $expectedViewHelperClassName) {
+        $expectedNamespace = $lastStackElement->getNamespace();
+        $expectedIdentifier = $lastStackElement->getIdentifier();
+
+        if ($namespaceIdentifier !== $expectedNamespace || $methodIdentifier !== $expectedIdentifier) {
             throw new Exception(
-                'Templating tags not properly nested. Expected: ' . $expectedViewHelperClassName . '; Actual: ' .
-                $actualViewHelperClassName,
+                sprintf(
+                    'Templating tags not properly nested. Expected: %s:%s. Actual: %s:%s',
+                    $expectedNamespace,
+                    $expectedIdentifier,
+                    $namespaceIdentifier,
+                    $methodIdentifier
+                ),
                 1224485398
             );
         }
         $this->callInterceptor($lastStackElement, InterceptorInterface::INTERCEPT_CLOSING_VIEWHELPER, $state);
+
         $state->getNodeFromStack()->addChildNode($lastStackElement);
 
         return true;
@@ -725,7 +747,6 @@ class TemplateParser
         $state = new ParsingState();
         $state->setRootNode($rootNode);
         $state->pushNodeToStack($rootNode);
-        $state->setVariableProvider($variableProvider->getScopeCopy($variableProvider->getAll()));
         return $state;
     }
 }

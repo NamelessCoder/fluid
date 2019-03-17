@@ -6,11 +6,7 @@ namespace TYPO3Fluid\Fluid\Core\Parser\SyntaxTree;
  * See LICENSE.txt that was shipped with this package.
  */
 
-use TYPO3Fluid\Fluid\Component\Argument\ArgumentCollection;
 use TYPO3Fluid\Fluid\Component\Argument\ArgumentCollectionInterface;
-use TYPO3Fluid\Fluid\Component\Argument\ArgumentDefinitionInterface;
-use TYPO3Fluid\Fluid\Component\NodeSubstitutingComponentInterface;
-use TYPO3Fluid\Fluid\Component\ParameterizedComponentInterface;
 use TYPO3Fluid\Fluid\Core\Parser\Exception;
 use TYPO3Fluid\Fluid\Core\Parser\ParsingState;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
@@ -20,14 +16,8 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\ViewHelperInterface;
 /**
  * Node which will call a ViewHelper associated with this node.
  */
-class ViewHelperNode extends AbstractNode implements ParameterizedComponentInterface
+class NamespacedNode extends AbstractNode
 {
-
-    /**
-     * @var string
-     */
-    protected $viewHelperClassName;
-
     /**
      * @var NodeInterface[]
      */
@@ -37,11 +27,6 @@ class ViewHelperNode extends AbstractNode implements ParameterizedComponentInter
      * @var RenderingContextInterface
      */
     protected $renderingContext;
-    
-    /**
-     * @var ViewHelperInterface
-     */
-    protected $uninitializedViewHelper = null;
 
     /**
      * @var ArgumentDefinition[]
@@ -54,7 +39,7 @@ class ViewHelperNode extends AbstractNode implements ParameterizedComponentInter
     protected $pointerTemplateCode = null;
 
     /**
-     * @var string
+     * @var array
      */
     protected $parsingPointers = [];
 
@@ -69,11 +54,6 @@ class ViewHelperNode extends AbstractNode implements ParameterizedComponentInter
     protected $identifier;
 
     /**
-     * @var ArgumentCollectionInterface
-     */
-    protected $parameters;
-
-    /**
      * Constructor.
      *
      * @param RenderingContextInterface $renderingContext a RenderingContext, provided by invoker
@@ -86,35 +66,9 @@ class ViewHelperNode extends AbstractNode implements ParameterizedComponentInter
     {
         $this->namespace = $namespace;
         $this->identifier = $identifier;
-        $resolver = $renderingContext->getViewHelperResolver();
         $this->arguments = $arguments;
-        $this->viewHelperClassName = $resolver->resolveViewHelperClassName($namespace, $identifier);
-        $this->uninitializedViewHelper = $resolver->createViewHelperInstanceFromClassName($this->viewHelperClassName);
-        $this->uninitializedViewHelper->setViewHelperNode($this);
-        // Note: RenderingContext required here though replaced later. See https://github.com/TYPO3Fluid/Fluid/pull/93
-        $this->uninitializedViewHelper->setRenderingContext($renderingContext);
-        $this->argumentDefinitions = $resolver->getArgumentDefinitionsForViewHelper($this->uninitializedViewHelper);
-        $this->rewriteBooleanNodesInArgumentsObjectTree($this->argumentDefinitions, $this->arguments);
-        $this->validateArguments($this->argumentDefinitions, $this->arguments);
         $this->renderingContext = $renderingContext;
         $this->parsingPointers = $renderingContext->getTemplateParser()->getCurrentParsingPointers();
-        $this->parameters = new ArgumentCollection();
-    }
-
-    public function evaluateWithArguments(RenderingContextInterface $context, ArgumentCollectionInterface $arguments)
-    {
-        return $this->evaluate($context);
-    }
-
-    public function addParameter(ArgumentDefinitionInterface $definition): ParameterizedComponentInterface
-    {
-        $this->parameters->addDefinition($definition);
-        return $this;
-    }
-
-    public function createArguments(): ArgumentCollectionInterface
-    {
-        return $this->parameters;
     }
 
     /**
@@ -224,7 +178,7 @@ class ViewHelperNode extends AbstractNode implements ParameterizedComponentInter
      * @param ArgumentCollectionInterface|null $arguments
      * @return string evaluated node after the view helper has been called.
      */
-    public function evaluate(RenderingContextInterface $renderingContext)
+    public function evaluate(RenderingContextInterface $renderingContext, ?ArgumentCollectionInterface $arguments = null)
     {
         return $renderingContext->getViewHelperInvoker()->invoke($this->uninitializedViewHelper, $this->arguments, $renderingContext);
     }
@@ -241,7 +195,7 @@ class ViewHelperNode extends AbstractNode implements ParameterizedComponentInter
         /** @var $argumentDefinition ArgumentDefinition */
         foreach ($argumentDefinitions as $argumentName => $argumentDefinition) {
             if (($argumentDefinition->getType() === 'boolean' || $argumentDefinition->getType() === 'bool')
-                 && isset($argumentsObjectTree[$argumentName])) {
+                && isset($argumentsObjectTree[$argumentName])) {
                 $argumentsObjectTree[$argumentName] = new BooleanNode($argumentsObjectTree[$argumentName]);
             }
         }

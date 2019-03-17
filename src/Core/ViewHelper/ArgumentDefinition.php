@@ -6,10 +6,15 @@ namespace TYPO3Fluid\Fluid\Core\ViewHelper;
  * See LICENSE.txt that was shipped with this package.
  */
 
+use TYPO3Fluid\Fluid\Component\Argument\ArgumentCollectionInterface;
+use TYPO3Fluid\Fluid\Component\Argument\ArgumentDefinitionInterface;
+use TYPO3Fluid\Fluid\Component\ValuedComponentInterface;
+use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
+
 /**
  * Argument definition of each view helper argument
  */
-class ArgumentDefinition
+class ArgumentDefinition implements ArgumentDefinitionInterface
 {
 
     /**
@@ -70,7 +75,7 @@ class ArgumentDefinition
      *
      * @return string Name of argument
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
@@ -80,7 +85,7 @@ class ArgumentDefinition
      *
      * @return string Type of argument
      */
-    public function getType()
+    public function getType(): string
     {
         return $this->type;
     }
@@ -90,7 +95,7 @@ class ArgumentDefinition
      *
      * @return string Description of argument
      */
-    public function getDescription()
+    public function getDescription(): string
     {
         return $this->description;
     }
@@ -114,4 +119,25 @@ class ArgumentDefinition
     {
         return $this->defaultValue;
     }
+
+    public function transformValueToType($value)
+    {
+        // TODO: Implement transformValueToType() method.
+    }
+
+    public function evaluateType(RenderingContextInterface $context, ?ArgumentCollectionInterface $arguments = null)
+    {
+        // TODO: Implement evaluateType() method.
+    }
+
+    public function setValue($value): \TYPO3Fluid\Fluid\Component\ValuedComponentInterface
+    {
+        // TODO: Implement setValue() method.
+    }
+
+    public function evaluateValue(RenderingContextInterface $context, ?ArgumentCollectionInterface $arguments = null)
+    {
+        // TODO: Implement evaluateValue() method.
+    }
+
 }

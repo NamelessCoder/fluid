@@ -150,6 +150,7 @@ class RenderViewHelper extends AbstractViewHelper
         if ($content === '') {
             $content = $arguments['default'] ?: $tagContent;
         }
+
         return $content;
     }
 }

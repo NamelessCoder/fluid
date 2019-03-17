@@ -88,7 +88,7 @@ class ViewHelperCompiler
             self::DEFAULT_INIT,
             sprintf(
                 '%s::%s(%s, %s, $renderingContext)',
-                $onClass,
+                '\\' . ltrim($onClass, '\\'),
                 $method,
                 $argumentsName,
                 $renderChildrenClosureName

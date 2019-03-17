@@ -6,6 +6,11 @@ namespace TYPO3Fluid\Fluid\Core\Parser;
  * See LICENSE.txt that was shipped with this package.
  */
 
+use TYPO3Fluid\Fluid\Component\ComponentInterface;
+use TYPO3Fluid\Fluid\Component\ContainerComponentInterface;
+use TYPO3Fluid\Fluid\Component\ExtendableComponentInterface;
+use TYPO3Fluid\Fluid\Component\ParameterizedComponentInterface;
+use TYPO3Fluid\Fluid\Component\Structure\SectionInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\Variables\VariableProviderInterface;
 
@@ -13,9 +18,8 @@ use TYPO3Fluid\Fluid\Core\Variables\VariableProviderInterface;
  * This interface is returned by \TYPO3Fluid\Fluid\Core\Parser\TemplateParser->parse()
  * method and is a parsed template
  */
-interface ParsedTemplateInterface
+interface ParsedTemplateInterface extends ComponentInterface, ContainerComponentInterface, ExtendableComponentInterface, ParameterizedComponentInterface
 {
-
     /**
      * @param string $identifier
      * @return void
@@ -36,13 +40,6 @@ interface ParsedTemplateInterface
     public function render(RenderingContextInterface $renderingContext);
 
     /**
-     * Returns a variable container used in the PostParse Facet.
-     *
-     * @return VariableProviderInterface
-     */
-    public function getVariableContainer();
-
-    /**
      * Returns the name of the layout that is defined within the current template via <f:layout name="..." />
      * If no layout is defined, this returns NULL
      * This requires the current rendering context in order to be able to evaluate the layout name
@@ -51,6 +48,14 @@ interface ParsedTemplateInterface
      * @return string
      */
     public function getLayoutName(RenderingContextInterface $renderingContext);
+
+    /**
+     * Get a (named) section from the parsed/compiled template.
+     *
+     * @param string $name
+     * @return SectionInterface
+     */
+    public function getSection(string $name): SectionInterface;
 
     /**
      * Method generated on compiled templates to add ViewHelper namespaces which were defined in-template

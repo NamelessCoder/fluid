@@ -13,22 +13,26 @@ use TYPO3Fluid\Fluid\Component\ParameterizedComponentInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
 /**
- * Root node of every syntax tree.
+ * Node used for sections (substitutes ViewHelperNode when
+ * ViewHelper is a section ViewHelper).
  */
-class RootNode extends AbstractNode implements ParameterizedComponentInterface
+class SectionNode extends AbstractNode implements ParameterizedComponentInterface
 {
+    protected $name = '';
+
     /**
      * @var ArgumentCollectionInterface
      */
     protected $parameters;
-
-    public function __construct()
+    
+    public function __construct(string $name)
     {
+        $this->name = $name;
         $this->parameters = new ArgumentCollection();
     }
 
     /**
-     * Evaluate the root node, by evaluating the subtree.
+     * Evaluate the section node, by evaluating the subtree.
      *
      * @param RenderingContextInterface $renderingContext
      * @return mixed Evaluated subtree
@@ -41,11 +45,6 @@ class RootNode extends AbstractNode implements ParameterizedComponentInterface
     public function evaluateWithArguments(RenderingContextInterface $renderingContext, ArgumentCollectionInterface $arguments)
     {
         return $this->evaluateChildNodes($renderingContext);
-    }
-
-    public function createArguments(): ArgumentCollectionInterface
-    {
-        return $this->parameters;
     }
 
     public function addParameter(ArgumentDefinitionInterface $definition): ParameterizedComponentInterface

@@ -6,6 +6,14 @@ namespace TYPO3Fluid\Fluid\Core\Parser;
  * See LICENSE.txt that was shipped with this package.
  */
 
+use TYPO3Fluid\Fluid\Component\Argument\ArgumentCollectionInterface;
+use TYPO3Fluid\Fluid\Component\ComponentInterface;
+use TYPO3Fluid\Fluid\Component\ContainerComponentInterface;
+use TYPO3Fluid\Fluid\Component\ExtendableComponentInterface;
+use TYPO3Fluid\Fluid\Component\NestedComponentInterface;
+use TYPO3Fluid\Fluid\Component\Structure\AbstractTemplateComponent;
+use TYPO3Fluid\Fluid\Component\Structure\ParsedSection;
+use TYPO3Fluid\Fluid\Component\Structure\SectionInterface;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\NodeInterface;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\RootNode;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
@@ -17,9 +25,8 @@ use TYPO3Fluid\Fluid\View;
  * and the current stack of open nodes (nodeStack) and a variable container used
  * for PostParseFacets.
  */
-class ParsingState implements ParsedTemplateInterface
+class ParsingState extends AbstractTemplateComponent implements ParsedTemplateInterface
 {
-
     /**
      * @var string
      */
@@ -40,14 +47,6 @@ class ParsingState implements ParsedTemplateInterface
     protected $nodeStack = [];
 
     /**
-     * Variable container where ViewHelpers implementing the PostParseFacet can
-     * store things in.
-     *
-     * @var VariableProviderInterface
-     */
-    protected $variableContainer;
-
-    /**
      * The layout name of the current template or NULL if the template does not contain a layout definition
      *
      * @var AbstractNode
@@ -58,6 +57,22 @@ class ParsingState implements ParsedTemplateInterface
      * @var boolean
      */
     protected $compilable = true;
+
+    public function getSection(string $name): SectionInterface
+    {
+        return $this->getNamedChild($name);
+    }
+
+    /**
+     * @return ParsedSection[]
+     */
+    public function getSections(): iterable
+    {
+        if ($this->extends instanceof ContainerComponentInterface) {
+            return array_merge($this->namedChildren, $this->extends->getNamedChildren());
+        }
+        return $this->namedChildren;
+    }
 
     /**
      * @param string $identifier
@@ -74,17 +89,6 @@ class ParsingState implements ParsedTemplateInterface
     public function getIdentifier()
     {
         return $this->identifier;
-    }
-
-    /**
-     * Injects a variable container to be used during parsing.
-     *
-     * @param VariableProviderInterface $variableContainer
-     * @return void
-     */
-    public function setVariableProvider(VariableProviderInterface $variableContainer)
-    {
-        $this->variableContainer = $variableContainer;
     }
 
     /**
@@ -117,6 +121,11 @@ class ParsingState implements ParsedTemplateInterface
     public function render(RenderingContextInterface $renderingContext)
     {
         return $this->getRootNode()->evaluate($renderingContext);
+    }
+
+    public function evaluate(RenderingContextInterface $context)
+    {
+        return $this->render($context);
     }
 
     /**
@@ -161,14 +170,9 @@ class ParsingState implements ParsedTemplateInterface
         return count($this->nodeStack);
     }
 
-    /**
-     * Returns a variable container which will be then passed to the postParseFacet.
-     *
-     * @return VariableProviderInterface The variable container or NULL if none has been set yet
-     */
-    public function getVariableContainer()
+    public function setLayoutNameNode(NodeInterface $layoutNameNode)
     {
-        return $this->variableContainer;
+        $this->layoutNameNode = $layoutNameNode;
     }
 
     /**
@@ -178,7 +182,7 @@ class ParsingState implements ParsedTemplateInterface
      */
     public function hasLayout()
     {
-        return $this->variableContainer->exists('layoutName');
+        return $this->layoutNameNode !== null;
     }
 
     /**
@@ -192,8 +196,13 @@ class ParsingState implements ParsedTemplateInterface
      */
     public function getLayoutName(RenderingContextInterface $renderingContext)
     {
-        $layoutName = $this->variableContainer->get('layoutName');
+        $layoutName = $this->layoutNameNode;
         return ($layoutName instanceof RootNode ? $layoutName->evaluate($renderingContext) : $layoutName);
+    }
+
+    public function getLayoutNameNode(): ?NodeInterface
+    {
+        return $this->layoutNameNode;
     }
 
     /**

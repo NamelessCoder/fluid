@@ -6,12 +6,14 @@ namespace TYPO3Fluid\Fluid\Core\Parser\SyntaxTree;
  * See LICENSE.txt that was shipped with this package.
  */
 
+use TYPO3Fluid\Fluid\Component\Argument\ArgumentCollectionInterface;
+use TYPO3Fluid\Fluid\Component\ComponentInterface;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
 /**
  * Node in the syntax tree.
  */
-interface NodeInterface
+interface NodeInterface extends ComponentInterface
 {
 
     /**
@@ -36,12 +38,4 @@ interface NodeInterface
      * @return void
      */
     public function addChildNode(NodeInterface $childNode);
-
-    /**
-     * Evaluates the node - can return not only strings, but arbitary objects.
-     *
-     * @param RenderingContextInterface $renderingContext
-     * @return mixed Evaluated node
-     */
-    public function evaluate(RenderingContextInterface $renderingContext);
 }

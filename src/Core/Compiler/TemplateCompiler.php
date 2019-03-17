@@ -6,12 +6,14 @@ namespace TYPO3Fluid\Fluid\Core\Compiler;
  * See LICENSE.txt that was shipped with this package.
  */
 
+use TYPO3Fluid\Fluid\Component\Argument\ArgumentCollectionInterface;
 use TYPO3Fluid\Fluid\Core\Parser\ParsedTemplateInterface;
 use TYPO3Fluid\Fluid\Core\Parser\ParsingState;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\ArrayNode;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\NodeInterface;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\RootNode;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\ViewHelperNode;
+use TYPO3Fluid\Fluid\Core\Rendering\RenderingContext;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 
 /**
@@ -201,6 +203,15 @@ class TemplateCompiler
             return null;
         }
 
+        // Macro-optimisation: by storing the *parsed* template in runtime memory until the request is expired,
+        // performance is increased many hundred percent when caches are flushed. This makes the TemplateCompiler
+        // effectively have a second-level cache internally which prevents loading and execution of the compiled
+        // class (which is merely a duplicated version of the parsing state). Even though compiled templates are
+        // more efficient than uncompiled parsing states, once parsed, the parsing state is as efficient to render,
+        // so the end result is that this second-level cache avoids creating two versions of the same template in
+        // the same execution scope.
+        $this->syntaxTreeInstanceCache[$identifier] = $parsingState;
+
         $identifier = $this->sanitizeIdentifier($identifier);
         $cache = $this->renderingContext->getCache();
         if (!$parsingState->isCompilable()) {
@@ -229,6 +240,11 @@ class TemplateCompiler
 
 %s {
 
+public function createArguments(): \TYPO3Fluid\Fluid\Component\Argument\ArgumentCollectionInterface
+{
+    return %s;
+}
+
 public function getLayoutName(\TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface \$renderingContext) {
 \$self = \$this;
 %s;
@@ -244,10 +260,11 @@ public function addCompiledNamespaces(\TYPO3Fluid\Fluid\Core\Rendering\Rendering
 
 }
 EOD;
-        $storedLayoutName = $parsingState->getVariableContainer()->get('layoutName');
+        $storedLayoutName = $parsingState->getLayoutNameNode();
         $templateCode = sprintf(
             $templateCode,
             $classDefinition,
+            $this->generateCodeForCreateArgumentsMethod($parsingState->createArguments()),
             $this->generateCodeForLayoutName($storedLayoutName),
             ($parsingState->hasLayout() ? 'TRUE' : 'FALSE'),
             var_export($this->renderingContext->getViewHelperResolver()->getNamespaces(), true),
@@ -255,6 +272,23 @@ EOD;
         );
         $this->renderingContext->getCache()->set($identifier, $templateCode);
         return $templateCode;
+    }
+
+    protected function generateCodeForCreateArgumentsMethod(ArgumentCollectionInterface $arguments)
+    {
+        $definitions = [];
+        foreach ($arguments->readAll() as $argument) {
+            $argumentDefinition = $argument->getDefinition();
+            $definitions[] = sprintf(
+                'new \TYPO3Fluid\Fluid\Core\ViewHelper\ArgumentDefinition(%s, %s, %s, %s, %s)',
+                var_export($argumentDefinition->getName(), true),
+                var_export($argumentDefinition->getType(), true),
+                var_export($argumentDefinition->getDescription(), true),
+                var_export($argumentDefinition->isRequired(), true),
+                var_export($argumentDefinition->getDefaultValue(), true)
+            );
+        }
+        return 'new \TYPO3Fluid\Fluid\Component\Argument\ArgumentCollection(' . implode(', ', $definitions) . ')';
     }
 
     /**
@@ -278,15 +312,12 @@ EOD;
     protected function generateSectionCodeFromParsingState(ParsingState $parsingState)
     {
         $generatedRenderFunctions = '';
-        if ($parsingState->getVariableContainer()->exists('1457379500_sections')) {
-            $sections = $parsingState->getVariableContainer()->get('1457379500_sections'); // TODO: refactor to $parsedTemplate->getSections()
-            foreach ($sections as $sectionName => $sectionRootNode) {
-                $generatedRenderFunctions .= $this->generateCodeForSection(
-                    $this->nodeConverter->convertListOfSubNodes($sectionRootNode),
-                    'section_' . sha1($sectionName),
-                    'section ' . $sectionName
-                );
-            }
+        foreach ($parsingState->getSections() as $sectionName => $section) {
+            $generatedRenderFunctions .= $this->generateCodeForSection(
+                $this->nodeConverter->convertListOfSubNodes($section->getNode()),
+                'section_' . sha1($sectionName),
+                'section ' . $sectionName
+            );
         }
         return $generatedRenderFunctions;
     }
@@ -347,7 +378,7 @@ EOD;
         $convertedSubNodes = $this->nodeConverter->convertListOfSubNodes($node);
         $closure .= $convertedSubNodes['initialization'];
         $closure .= sprintf('return %s;', $convertedSubNodes['execution']) . chr(10);
-        $closure .= '}';
+        $closure .= '}' . PHP_EOL;
         return $closure;
     }
 
@@ -365,7 +396,9 @@ EOD;
         $argument = $arguments[$argumentName];
         $closure = 'function() use ($renderingContext, $self) {' . chr(10);
         $compiled = $this->nodeConverter->convert($argument);
-        $closure .= $compiled['initialization'] . chr(10);
+        if (!empty($compiled['initialization'])) {
+            $closure .= $compiled['initialization'] . chr(10);
+        }
         $closure .= 'return ' . $compiled['execution'] . ';' . chr(10);
         $closure .= '}';
         return $closure;

@@ -6,9 +6,14 @@ namespace TYPO3Fluid\Fluid\ViewHelpers;
  * See LICENSE.txt that was shipped with this package.
  */
 
+use TYPO3Fluid\Fluid\Component\Event\EventInterface;
+use TYPO3Fluid\Fluid\Component\Event\PostParseEvent;
+use TYPO3Fluid\Fluid\Component\EventAwareComponentInterface;
+use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\TextNode;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\ViewHelperNode;
 use TYPO3Fluid\Fluid\Core\Variables\VariableProviderInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
+use TYPO3Fluid\Fluid\Core\ViewHelper\CompilerSkippedViewHelperInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\PostParseInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\TemplateVariableContainer;
 use TYPO3Fluid\Fluid\Core\ViewHelper\Traits\ParserRuntimeOnly;
@@ -27,7 +32,7 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\Traits\ParserRuntimeOnly;
  *
  * @api
  */
-class LayoutViewHelper extends AbstractViewHelper
+class LayoutViewHelper extends AbstractViewHelper implements EventAwareComponentInterface, CompilerSkippedViewHelperInterface
 {
     use ParserRuntimeOnly;
 
@@ -42,25 +47,11 @@ class LayoutViewHelper extends AbstractViewHelper
         $this->registerArgument('name', 'string', 'Name of layout to use. If none given, "Default" is used.');
     }
 
-    /**
-     * On the post parse event, add the "layoutName" variable to the variable container so it can be used by the TemplateView.
-     *
-     * @param ViewHelperNode $node
-     * @param array $arguments
-     * @param VariableProviderInterface $variableContainer
-     * @return void
-     */
-    public static function postParseEvent(
-        ViewHelperNode $node,
-        array $arguments,
-        VariableProviderInterface $variableContainer
-    ) {
-        if (isset($arguments['name'])) {
-            $layoutNameNode = $arguments['name'];
-        } else {
-            $layoutNameNode = 'Default';
+    public function handleEvent(EventInterface $event): EventAwareComponentInterface
+    {
+        if ($event instanceof PostParseEvent) {
+            $event->getParsingState()->setLayoutNameNode($event->getNode()->getArguments()['name'] ?? new TextNode('Default'));
         }
-
-        $variableContainer->add('layoutName', $layoutNameNode);
+        return $this;
     }
 }

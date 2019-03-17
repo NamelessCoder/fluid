@@ -6,10 +6,20 @@ namespace TYPO3Fluid\Fluid\ViewHelpers;
  * See LICENSE.txt that was shipped with this package.
  */
 
+use TYPO3Fluid\Fluid\Component\ContainerComponentInterface;
+use TYPO3Fluid\Fluid\Component\Event\EventInterface;
+use TYPO3Fluid\Fluid\Component\Event\PostParseEvent;
+use TYPO3Fluid\Fluid\Component\EventAwareComponentInterface;
+use TYPO3Fluid\Fluid\Component\Structure\ParsedSection;
+use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\NodeInterface;
+use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\RootNode;
+use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\SectionNode;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\TextNode;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\ViewHelperNode;
+use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\Variables\VariableProviderInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
+use TYPO3Fluid\Fluid\Core\ViewHelper\CompilerSkippedViewHelperInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\TemplateVariableContainer;
 use TYPO3Fluid\Fluid\Core\ViewHelper\Traits\ParserRuntimeOnly;
 
@@ -55,7 +65,7 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\Traits\ParserRuntimeOnly;
  *
  * @api
  */
-class SectionViewHelper extends AbstractViewHelper
+class SectionViewHelper extends AbstractViewHelper implements EventAwareComponentInterface, CompilerSkippedViewHelperInterface
 {
     use ParserRuntimeOnly;
 
@@ -75,23 +85,15 @@ class SectionViewHelper extends AbstractViewHelper
         $this->registerArgument('name', 'string', 'Name of the section', true);
     }
 
-    /**
-     * Save the associated ViewHelper node in a static public class variable.
-     * called directly after the ViewHelper was built.
-     *
-     * @param ViewHelperNode $node
-     * @param TextNode[] $arguments
-     * @param VariableProviderInterface $variableContainer
-     * @return void
-     */
-    public static function postParseEvent(ViewHelperNode $node, array $arguments, VariableProviderInterface $variableContainer)
+    public function handleEvent(EventInterface $event): EventAwareComponentInterface
     {
-        /** @var $nameArgument TextNode */
-        $nameArgument = $arguments['name'];
-        $sectionName = $nameArgument->getText();
-        $sections = $variableContainer['1457379500_sections'] ? $variableContainer['1457379500_sections'] : [];
-        $sections[$sectionName] = $node;
-        $variableContainer['1457379500_sections'] = $sections;
+        if ($event instanceof PostParseEvent) {
+            $node = $event->getNode();
+            $name = $node->getArguments()['name']->evaluate($event->getRenderingContext());
+            $node = new ParsedSection($name, $this->viewHelperNode, $this->viewHelperNode->createArguments());
+            $container = $event->getParsingState()->addNamedChild($name, $node);
+        }
+        return $this;
     }
 
     /**
@@ -102,11 +104,6 @@ class SectionViewHelper extends AbstractViewHelper
      */
     public function render()
     {
-        $content = '';
-        if ($this->viewHelperVariableContainer->exists(SectionViewHelper::class, 'isCurrentlyRenderingSection')) {
-            $this->viewHelperVariableContainer->remove(SectionViewHelper::class, 'isCurrentlyRenderingSection');
-            $content = $this->renderChildren();
-        }
-        return $content;
+        return $this->renderChildren();
     }
 }

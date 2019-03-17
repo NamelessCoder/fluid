@@ -9,6 +9,7 @@ namespace TYPO3Fluid\Fluid\ViewHelpers;
 use TYPO3Fluid\Fluid\Core\Compiler\TemplateCompiler;
 use TYPO3Fluid\Fluid\Core\Parser\SyntaxTree\ViewHelperNode;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
+use TYPO3Fluid\Fluid\Core\ViewHelper\CompilerSkippedViewHelperInterface;
 
 /**
  * Else-Branch of a condition. Only has an effect inside of "If". See the If-ViewHelper for documentation.
@@ -30,7 +31,7 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  * @see TYPO3Fluid\Fluid\ViewHelpers\IfViewHelper
  * @api
  */
-class ElseViewHelper extends AbstractViewHelper
+class ElseViewHelper extends AbstractViewHelper implements CompilerSkippedViewHelperInterface
 {
 
     /**

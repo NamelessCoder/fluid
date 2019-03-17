@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>PHP</ID>
+  <OriginalElement>/Users/claus/Repositories/fluidtypo3/fluidtypo3-docker-dev/vendor/typo3fluid/fluid/src/Component</OriginalElement>
+  <nodes>
+    <node x="212.5" y="163.5">\TYPO3Fluid\Fluid\Component\Structure\CompiledSection</node>
+    <node x="-26.5" y="472.5">\TYPO3Fluid\Fluid\Component\Structure\AbstractTemplateComponent</node>
+    <node x="268.0" y="305.5">\TYPO3Fluid\Fluid\Core\Parser\ParsedTemplateInterface</node>
+    <node x="3.5" y="-18.5">\TYPO3Fluid\Fluid\Component\Structure\ParsedSection</node>
+    <node x="541.0" y="305.5">\TYPO3Fluid\Fluid\Core\Compiler\AbstractCompiledTemplate</node>
+    <node x="1.0" y="305.5">\TYPO3Fluid\Fluid\Component\ComponentInterface</node>
+    <node x="14.0" y="185.5">\TYPO3Fluid\Fluid\Component\Structure\SectionInterface</node>
+    <node x="270.5" y="439.5">\TYPO3Fluid\Fluid\Core\Parser\ParsingState</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="\TYPO3Fluid\Fluid\Core\Parser\ParsingState" target="\TYPO3Fluid\Fluid\Core\Parser\ParsedTemplateInterface">
+      <point x="0.0" y="-80.5" />
+      <point x="0.0" y="14.5" />
+    </edge>
+    <edge source="\TYPO3Fluid\Fluid\Component\Structure\AbstractTemplateComponent" target="\TYPO3Fluid\Fluid\Component\ComponentInterface">
+      <point x="0.0" y="-47.5" />
+      <point x="0.0" y="14.5" />
+    </edge>
+    <edge source="\TYPO3Fluid\Fluid\Component\Structure\SectionInterface" target="\TYPO3Fluid\Fluid\Component\ComponentInterface">
+      <point x="0.0" y="14.5" />
+      <point x="0.0" y="-14.5" />
+    </edge>
+    <edge source="\TYPO3Fluid\Fluid\Core\Compiler\AbstractCompiledTemplate" target="\TYPO3Fluid\Fluid\Core\Parser\ParsedTemplateInterface">
+      <point x="-99.0" y="-0.0" />
+      <point x="92.0" y="-0.0" />
+    </edge>
+    <edge source="\TYPO3Fluid\Fluid\Component\Structure\CompiledSection" target="\TYPO3Fluid\Fluid\Component\Structure\SectionInterface">
+      <point x="-67.5" y="-0.0" />
+      <point x="66.0" y="-0.0" />
+    </edge>
+    <edge source="\TYPO3Fluid\Fluid\Core\Parser\ParsingState" target="\TYPO3Fluid\Fluid\Component\Structure\AbstractTemplateComponent">
+      <point x="-89.5" y="-0.0" />
+      <point x="106.5" y="-0.0" />
+    </edge>
+    <edge source="\TYPO3Fluid\Fluid\Core\Parser\ParsedTemplateInterface" target="\TYPO3Fluid\Fluid\Component\ComponentInterface">
+      <point x="-92.0" y="-0.0" />
+      <point x="79.0" y="-0.0" />
+    </edge>
+    <edge source="\TYPO3Fluid\Fluid\Component\Structure\ParsedSection" target="\TYPO3Fluid\Fluid\Component\Structure\SectionInterface">
+      <point x="0.0" y="58.5" />
+      <point x="0.0" y="-14.5" />
+    </edge>
+    <edge source="\TYPO3Fluid\Fluid\Core\Compiler\AbstractCompiledTemplate" target="\TYPO3Fluid\Fluid\Component\Structure\AbstractTemplateComponent">
+      <point x="0.0" y="14.5" />
+      <point x="640.0" y="680.0" />
+      <point x="80.0" y="680.0" />
+      <point x="0.0" y="47.5" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="1.0" x="1245.0" y="578.0" />
+  <SelectedNodes />
+  <Categories>
+    <Category>Constants</Category>
+    <Category>Fields</Category>
+  </Categories>
+  <VISIBILITY>private</VISIBILITY>
+</Diagram>
+
