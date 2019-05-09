@@ -589,9 +589,11 @@ class TemplateParser
     {
         $sections = preg_split(Patterns::$SPLIT_PATTERN_SHORTHANDSYNTAX, $text, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
 
+        /*
         if ($sections === false) {
             $sections = preg_split(Patterns::$SPLIT_PATTERN_SHORTHANDSYNTAX_U1, $text, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
         }
+        */
 
         foreach ($sections as $section) {
             $matchedVariables = [];

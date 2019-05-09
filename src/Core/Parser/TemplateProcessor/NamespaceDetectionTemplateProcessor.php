@@ -178,9 +178,11 @@ class NamespaceDetectionTemplateProcessor implements TemplateProcessorInterface
 
             $sections = preg_split(Patterns::$SPLIT_PATTERN_SHORTHANDSYNTAX, $templateElement, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
 
+            /*
             if ($sections === false) {
                 $sections = preg_split(Patterns::$SPLIT_PATTERN_SHORTHANDSYNTAX_U1, $templateElement, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
             }
+            */
 
             foreach ($sections as $section) {
                 if (preg_match(Patterns::$SCAN_PATTERN_SHORTHANDSYNTAX_OBJECTACCESSORS, $section, $matchedVariables) > 0) {
