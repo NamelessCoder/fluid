@@ -124,6 +124,19 @@ abstract class Patterns
 			}                                 # End of shorthand syntax
 		)/x';
 
+    static public $SPLIT_PATTERN_SHORTHANDSYNTAX_U1 = '/
+		(
+			{                                 # Start of shorthand syntax
+				(?:                           # Shorthand syntax is either composed of...
+					[a-zA-Z0-9\|\->_:=,.()*+\^\/\%] # Various characters including math operations
+					|"(?:\\\"|[^"])*"         # Double-quoted strings
+					|\'(?:\\\\\'|[^\'])*\'    # Single-quoted strings
+					|(?R)                     # Other shorthand syntaxes inside, albeit not in a quoted string
+					|\s+                      # Spaces
+				)+
+			}                                 # End of shorthand syntax
+		)/u';
+
     /**
      * Pattern which detects the object accessor syntax:
      * {object.some.value}, additionally it detects ViewHelpers like
